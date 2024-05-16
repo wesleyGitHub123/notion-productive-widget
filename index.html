@@ -26,6 +26,7 @@
     <!-- Initial tasks can be added here -->
   </ul>
   <button onclick="addTask('a')">Add Task</button>
+  <button onclick="removeTask('a')">Remove Task</button>
 </div>
 
 <div class="task-list">
@@ -34,6 +35,7 @@
     <!-- Initial tasks can be added here -->
   </ul>
   <button onclick="addTask('b')">Add Task</button>
+  <button onclick="removeTask('b')">Remove Task</button>
 </div>
 
 <div class="task-list">
@@ -42,6 +44,7 @@
     <!-- Initial tasks can be added here -->
   </ul>
   <button onclick="addTask('c')">Add Task</button>
+  <button onclick="removeTask('c')">Remove Task</button>
 </div>
 
 <button onclick="calculateCompletion()">Calculate Completion Percentage</button>
@@ -52,24 +55,18 @@
   function addTask(list) {
     const listElement = document.getElementById(`list-${list}`);
     const taskCount = listElement.children.length + 1;
-    const newTask = `<li class="task-item" id="task-${list}-${taskCount}">
-                        <input type="checkbox" onchange="saveTasks()"> Task ${taskCount}
-                        <input type="text" onchange="saveTasks()" placeholder="Task description">
-                        <button onclick="removeTask('${list}', ${taskCount})">Remove</button>
-                    </li>`;
+    const newTask = `<li class="task-item"><input type="checkbox" id="task-${list}-${taskCount}" onchange="saveTasks()"> Task ${taskCount}<input type="text" onchange="saveTasks()" placeholder="Task description"></li>`;
     listElement.insertAdjacentHTML('beforeend', newTask);
     saveTasks(); // Save tasks to local storage after adding a new task
   }
-
-  // Function to remove a task
-  function removeTask(list, taskCount) {
-    const taskElement = document.getElementById(`task-${list}-${taskCount}`);
-    taskElement.remove();
-    saveTasks(); // Save tasks to local storage after removing a task
+  function removeTask(list) {
+    const listElement = document.getElementById(`list-${list}`);
+    const lastTask = listElement.lastElementChild;
+    if (lastTask) {
+      listElement.removeChild(lastTask);
+      saveTasks(); // Save tasks to local storage after removing a task
+    }
   }
-
-
-
   function calculateCompletion() {
     // Initialize variables to count completed tasks and total tasks for each list
     let completedTasksA = 0;
