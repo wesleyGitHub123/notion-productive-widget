@@ -18,7 +18,8 @@
 </head>
 <body>
 <h2>Task Completion Calculator</h2>
-
+<label for="current-day">Current Day:</label>
+<input type="text" id="current-day" onchange="saveCurrentDay()">
 <div class="task-list">
   <h3>List A (Important Tasks)</h3>
   <ul id="list-a">
@@ -51,10 +52,24 @@
   function addTask(list) {
     const listElement = document.getElementById(`list-${list}`);
     const taskCount = listElement.children.length + 1;
-    const newTask = `<li class="task-item"><input type="checkbox" id="task-${list}-${taskCount}" onchange="saveTasks()"> Task ${taskCount}<input type="text" onchange="saveTasks()" placeholder="Task description"></li>`;
+    const newTask = `<li class="task-item" id="task-${list}-${taskCount}">
+                        <input type="checkbox" onchange="saveTasks()"> Task ${taskCount}
+                        <input type="text" onchange="saveTasks()" placeholder="Task description">
+                        <button onclick="removeTask('${list}', ${taskCount})">Remove</button>
+                    </li>`;
     listElement.insertAdjacentHTML('beforeend', newTask);
     saveTasks(); // Save tasks to local storage after adding a new task
   }
+
+  // Function to remove a task
+  function removeTask(list, taskCount) {
+    const taskElement = document.getElementById(`task-${list}-${taskCount}`);
+    taskElement.remove();
+    saveTasks(); // Save tasks to local storage after removing a task
+  }
+
+
+
   function calculateCompletion() {
     // Initialize variables to count completed tasks and total tasks for each list
     let completedTasksA = 0;
