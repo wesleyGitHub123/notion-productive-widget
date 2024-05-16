@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Productivity Scoring Widget</title>
+    <title>Enhanced Productivity Scoring Widget</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,8 +12,10 @@
         .task {
             margin-bottom: 10px;
         }
-        .task input[type="text"] {
-            width: 60%;
+        .task input[type="text"],
+        .task input[type="date"],
+        .task select {
+            margin-right: 10px;
             padding: 5px;
         }
         .task input[type="checkbox"] {
@@ -43,26 +45,46 @@
 </head>
 <body>
     <h1>Daily Productivity Scoring</h1>
-    <div id="taskList">
-        <div class="task">
-            <input type="text" placeholder="Enter a task">
-            <input type="checkbox">
-        </div>
-    </div>
+    <div id="taskList"></div>
     <button id="addTaskBtn">Add Task</button>
     <button id="calculateBtn">Calculate Score</button>
     <div id="score">Your productivity score will appear here.</div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTasks();
+        });
+
         document.getElementById('addTaskBtn').addEventListener('click', function() {
-            const taskList = document.getElementById('taskList');
-            const newTask = document.createElement('div');
-            newTask.className = 'task';
-            newTask.innerHTML = '<input type="text" placeholder="Enter a task"><input type="checkbox">';
-            taskList.appendChild(newTask);
+            addTask();
         });
 
         document.getElementById('calculateBtn').addEventListener('click', function() {
+            calculateScore();
+        });
+
+        function addTask(description = '', dueDate = '', priority = 'Medium', completed = false) {
+            const taskList = document.getElementById('taskList');
+            const newTask = document.createElement('div');
+            newTask.className = 'task';
+
+            newTask.innerHTML = `
+                <input type="text" placeholder="Task description" value="${description}">
+                <input type="date" value="${dueDate}">
+                <select>
+                    <option value="Low" ${priority === 'Low' ? 'selected' : ''}>Low</option>
+                    <option value="Medium" ${priority === 'Medium' ? 'selected' : ''}>Medium</option>
+                    <option value="High" ${priority === 'High' ? 'selected' : ''}>High</option>
+                </select>
+                <input type="checkbox" ${completed ? 'checked' : ''}>
+                <button onclick="removeTask(this)">Remove</button>
+            `;
+
+            taskList.appendChild(newTask);
+            saveTasks();
+        }
+
+        function calculateScore() {
             const tasks = document.querySelectorAll('.task');
             let completedTasks = 0;
             let totalTasks = tasks.length;
@@ -76,8 +98,32 @@
 
             let score = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
             document.getElementById('score').innerText = `Your productivity score is: ${score.toFixed(2)}%`;
-        });
+            saveTasks();
+        }
+
+        function saveTasks() {
+            const tasks = [];
+            document.querySelectorAll('.task').forEach(task => {
+                const description = task.querySelector('input[type="text"]').value;
+                const dueDate = task.querySelector('input[type="date"]').value;
+                const priority = task.querySelector('select').value;
+                const completed = task.querySelector('input[type="checkbox"]').checked;
+                tasks.push({ description, dueDate, priority, completed });
+            });
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        function loadTasks() {
+            const savedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            savedTasks.forEach(task => addTask(task.description, task.dueDate, task.priority, task.completed));
+        }
+
+        function removeTask(button) {
+            button.parentElement.remove();
+            saveTasks();
+        }
     </script>
 </body>
 </html>
+
 
