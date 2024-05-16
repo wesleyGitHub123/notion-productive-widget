@@ -3,140 +3,166 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Productivity Scoring with Eisenhower Matrix</title>
+  <title>Task Completion Calculator</title>
   <style>
-    .task { margin-bottom: 10px; }
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .task-list {
+      margin-bottom: 20px;
+    }
+    .task-item {
+      margin-bottom: 5px;
+    }
   </style>
 </head>
 <body>
-<h1>Daily Productivity Scoring</h1>
+<h2>Task Completion Calculator</h2>
 
-<div id="urgentImportantList" class="task-list"></div>
-<div id="notUrgentImportantList" class="task-list"></div>
-<div id="urgentNotImportantList" class="task-list"></div>
-<div id="notUrgentNotImportantList" class="task-list"></div>
+<div class="task-list">
+  <h3>List A (Important Tasks)</h3>
+  <ul id="list-a">
+    <!-- Initial tasks can be added here -->
+  </ul>
+  <button onclick="addTask('a')">Add Task</button>
+</div>
 
-<button id="addTaskBtn">Add Task</button>
-<button id="calculateBtn">Calculate Score</button>
+<div class="task-list">
+  <h3>List B (Time-Wasting Activities)</h3>
+  <ul id="list-b">
+    <!-- Initial tasks can be added here -->
+  </ul>
+  <button onclick="addTask('b')">Add Task</button>
+</div>
 
-<div id="score">Your productivity score will appear here.</div>
+<div class="task-list">
+  <h3>List C (Self-Care)</h3>
+  <ul id="list-c">
+    <!-- Initial tasks can be added here -->
+  </ul>
+  <button onclick="addTask('c')">Add Task</button>
+</div>
+
+<button onclick="calculateCompletion()">Calculate Completion Percentage</button>
+<button onclick="resetTasks()">Reset All Tasks</button>
+<div id="completionResult"></div>
 
 <script>
-  document.getElementById('addTaskBtn').addEventListener('click', () => {
-    addTask();
-  });
-
-  document.getElementById('calculateBtn').addEventListener('click', () => {
-    calculateScore();
-  });
-
-  function addTask(description = '', priority = 'Urgent and Important', completed = false, category = 'urgentImportantList') {
-    const taskList = document.getElementById(category);
-    const task = document.createElement('div');
-    task.className = 'task';
-    task.innerHTML = `
-      <input type="text" value="${description}" placeholder="Task description">
-      <select onchange="updateCategory(this)">
-       <option value="Important Tasks" ${priority === 'Important Tasks' ? 'selected' : ''}>Important Tasks</option>
-       <option value="Time-Wasting Activities" ${priority === 'Time-Wasting Activities' ? 'selected' : ''}>Time-Wasting Activities</option>
-       <option value="Taking care of myself" ${priority === 'Taking care of myself' ? 'selected' : ''}>Taking care of myself</option>
-      </select>
-      <input type="checkbox" ${completed ? 'checked' : ''}>
-      <button onclick="removeTask(this)">Remove</button>
-    `;
-    taskList.appendChild(task);
+  function addTask(list) {
+    const listElement = document.getElementById(`list-${list}`);
+    const taskCount = listElement.children.length + 1;
+    const newTask = `<li class="task-item"><input type="checkbox" id="task-${list}-${taskCount}" onchange="saveTasks()"> Task ${taskCount}<input type="text" onchange="saveTasks()" placeholder="Task description"></li>`;
+    listElement.insertAdjacentHTML('beforeend', newTask);
+    saveTasks(); // Save tasks to local storage after adding a new task
   }
+  function calculateCompletion() {
+    // Initialize variables to count completed tasks and total tasks for each list
+    let completedTasksA = 0;
+    let totalTasksA = 0;
+    let completedTasksB = 0;
+    let totalTasksB = 0;
+    let completedTasksC = 0;
+    let totalTasksC = 0;
 
-  function calculateScore() {
-    const taskLists = document.querySelectorAll('.task-list');
-    let totalScore = 0;
-    let maxScore = 0;
+    // Count completed tasks and total tasks for List A
+    for (let i = 1; ; i++) {
+      const checkbox = document.getElementById(`task-a-${i}`);
+      if (!checkbox) break; // Exit the loop if there are no more tasks
+      totalTasksA++;
+      if (checkbox.checked) {
+        completedTasksA++;
+      }
+    }
 
-    taskLists.forEach(taskList => {
-      const tasks = taskList.querySelectorAll('.task');
-      const category = taskList.id;
+    // Count completed tasks and total tasks for List B
+    for (let i = 1; ; i++) {
+      const checkbox = document.getElementById(`task-b-${i}`);
+      if (!checkbox) break; // Exit the loop if there are no more tasks
+      totalTasksB++;
+      if (checkbox.checked) {
+        completedTasksB++;
+      }
+    }
 
-      let categoryScore = 0;
-      let categoryMaxScore = 0;
+    // Count completed tasks and total tasks for List C
+    for (let i = 1; ; i++) {
+      const checkbox = document.getElementById(`task-c-${i}`);
+      if (!checkbox) break; // Exit the loop if there are no more tasks
+      totalTasksC++;
+      if (checkbox.checked) {
+        completedTasksC++;
+      }
+    }
 
-      tasks.forEach(task => {
-        const checkbox = task.querySelector('input[type="checkbox"]');
-        const priority = task.querySelector('select').value;
-        let taskScore = 0;
+    // Calculate completion percentages considering completed tasks and total tasks
+    const completionA = (completedTasksA / totalTasksA) * 100 || 0;
+    const completionB = (completedTasksB / totalTasksB) * 100 || 0;
+    const completionC = (completedTasksC / totalTasksC) * 100 || 0;
 
-        switch(priority) {
-          case 'Important Tasks':
-            taskScore = checkbox.checked ? 65 : 0;
-            break;
-          case 'Time-Wasting Activities':
-            taskScore = checkbox.checked ? 20 : 0;
-            break;
-          case 'Taking care of myself':
-            taskScore = checkbox.checked ? 15 : 0;
-            break;
-          default:
-            taskScore = 0;
-        }
+    // Calculate weighted completion percentages
+    const weightedCompletionA = completionA * 0.60;
+    const weightedCompletionB = completionB * 0.25;
+    const weightedCompletionC = completionC * 0.15;
 
-        categoryScore += taskScore;
-        categoryMaxScore += (priority === 'Important Tasks' ? 65 : (priority === 'Time-Wasting Activities' ? 20 : 15)); // Adding maximum score based on priority
+    // Calculate overall completion percentage
+    const overallCompletion = weightedCompletionA + weightedCompletionB + weightedCompletionC;
 
-      });
-
-      totalScore += categoryScore;
-      maxScore += categoryMaxScore;
-
-    });
-
-    let scorePercentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
-    document.getElementById('score').innerText = `Your productivity score is: ${scorePercentage.toFixed(2)}%`;
-    saveTasks();
-  }
-
-  function removeTask(button) {
-    button.parentElement.remove();
-    saveTasks();
-  }
-
-  function updateCategory(select) {
-    const task = select.parentElement;
-    const newCategory = select.value;
-    document.getElementById(newCategory).appendChild(task);
-    saveTasks();
+    // Display the result
+    document.getElementById("completionResult").innerHTML = `Overall Completion Percentage: ${overallCompletion.toFixed(2)}%`;
   }
 
   function saveTasks() {
-    const tasks = [];
-    document.querySelectorAll('.task-list .task').forEach(task => {
-      const description = task.querySelector('input[type="text"]').value;
-      const priority = task.querySelector('select').value;
-      const completed = task.querySelector('input[type="checkbox"]').checked;
-      tasks.push({ description, priority, completed });
+    const tasks = {
+      listA: [],
+      listB: [],
+      listC: []
+    };
+
+    ['a', 'b', 'c'].forEach(list => {
+      const listItems = document.querySelectorAll(`#list-${list} .task-item`);
+      listItems.forEach(item => {
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        const description = item.querySelector('input[type="text"]').value;
+        tasks[`list${list.toUpperCase()}`].push({
+          checked: checkbox.checked,
+          description: description
+        });
+      });
     });
+
     localStorage.setItem('tasks', JSON.stringify(tasks));
   }
 
   function loadTasks() {
-    const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-    tasks.forEach(task => {
-      addTask(task.description, task.priority, task.completed, getCategory(task.priority));
+    const savedTasks = localStorage.getItem('tasks');
+    if (savedTasks) {
+      const tasks = JSON.parse(savedTasks);
+      ['a', 'b', 'c'].forEach(list => {
+        const listElement = document.getElementById(`list-${list}`);
+        listElement.innerHTML = '';
+        tasks[`list${list.toUpperCase()}`].forEach((task, index) => {
+          const newTask = `<li class="task-item"><input type="checkbox" id="task-${list}-${index + 1}" onchange="saveTasks()" ${task.checked ? 'checked' : ''}> ${task.description}<input type="text" onchange="saveTasks()" value="${task.description}" placeholder="Task description"></li>`;
+          listElement.insertAdjacentHTML('beforeend', newTask);
+        });
+      });
+    }
+  }
+
+  // Load tasks when the DOM content is fully loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    loadTasks();
+  });
+  function resetTasks() {
+    localStorage.removeItem('tasks'); // Remove saved tasks from local storage
+    ['a', 'b', 'c'].forEach(list => {
+      document.getElementById(`list-${list}`).innerHTML = ''; // Clear tasks from each list
     });
   }
 
-  loadTasks();
-
-  function getCategory(priority) {
-    switch (priority) {
-      case 'Important Tasks':
-        return 'importantTasksList';
-      case 'Time-Wasting Activities':
-        return 'timeWastingActivitiesList';
-      case 'Taking care of myself':
-        return 'selfCareList';
-      default:
-        return 'urgentImportantList';
-    }
-  }
+  // Load tasks when the DOM content is fully loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    loadTasks();
+  });
 </script>
 </body>
 </html>
