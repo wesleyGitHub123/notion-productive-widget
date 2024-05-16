@@ -1,122 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Productivity Scoring Widget</title>
-    <style>
-        body {
-            font-family: Calibri, sans-serif;
-            margin: 20px;
-        }
-        .task {
-            margin-bottom: 10px;
-        }
-        .task input[type="text"],
-        .task input[type="date"],
-        .task select {
-            margin-right: 10px;
-            padding: 5px;
-        }
-        .task input[type="checkbox"] {
-            margin-left: 10px;
-        }
-        #addTaskBtn {
-            margin: 10px 0;
-            padding: 10px 20px;
-            background-color: #28a745;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-        }
-
-        #score {
-            margin-top: 20px;
-            font-size: 20px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Productivity Scoring with Eisenhower Matrix</title>
+  <style>
+    .task { margin-bottom: 10px; }
+  </style>
 </head>
 <body>
-    <h1>Daily Productivity Scoring</h1>
-    <div id="taskList"></div>
-    <button id="addTaskBtn">Add Task</button>
-    <button id="calculateBtn">Calculate Score</button>
-    <div id="score">Your productivity score will appear here.</div>
+<h1>Daily Productivity Scoring</h1>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            loadTasks();
-        });
+<div id="urgentImportantList" class="task-list"></div>
+<div id="notUrgentImportantList" class="task-list"></div>
+<div id="urgentNotImportantList" class="task-list"></div>
+<div id="notUrgentNotImportantList" class="task-list"></div>
 
-        document.getElementById('addTaskBtn').addEventListener('click', function() {
-            addTask();
-        });
+<button id="addTaskBtn">Add Task</button>
+<button id="calculateBtn">Calculate Score</button>
 
-        document.getElementById('calculateBtn').addEventListener('click', function() {
-            calculateScore();
-        });
+<div id="score">Your productivity score will appear here.</div>
 
-        function addTask(description = '', dueDate = '', priority = 'Medium', completed = false) {
-            const taskList = document.getElementById('taskList');
-            const newTask = document.createElement('div');
-            newTask.className = 'task';
+<script>
+  document.getElementById('addTaskBtn').addEventListener('click', () => {
+    addTask();
+  });
 
-            newTask.innerHTML = `
-                <input type="text" placeholder="Task description" value="${description}">
-                <input type="date" value="${dueDate}">
-                <select>
-                    <option value="Low" ${priority === 'Low' ? 'selected' : ''}>Low</option>
-                    <option value="Medium" ${priority === 'Medium' ? 'selected' : ''}>Medium</option>
-                    <option value="High" ${priority === 'High' ? 'selected' : ''}>High</option>
-                </select>
-                <input type="checkbox" ${completed ? 'checked' : ''}>
-                <button onclick="removeTask(this)">Remove</button>
-            `;
+  document.getElementById('calculateBtn').addEventListener('click', () => {
+    calculateScore();
+  });
 
-            taskList.appendChild(newTask);
-            saveTasks();
+  function addTask(description = '', priority = 'Urgent and Important', completed = false, category = 'urgentImportantList') {
+    const taskList = document.getElementById(category);
+    const task = document.createElement('div');
+    task.className = 'task';
+    task.innerHTML = `
+      <input type="text" value="${description}" placeholder="Task description">
+      <select onchange="updateCategory(this)">
+       <option value="Important Tasks" ${priority === 'Important Tasks' ? 'selected' : ''}>Important Tasks</option>
+       <option value="Time-Wasting Activities" ${priority === 'Time-Wasting Activities' ? 'selected' : ''}>Time-Wasting Activities</option>
+       <option value="Taking care of myself" ${priority === 'Taking care of myself' ? 'selected' : ''}>Taking care of myself</option>
+      </select>
+      <input type="checkbox" ${completed ? 'checked' : ''}>
+      <button onclick="removeTask(this)">Remove</button>
+    `;
+    taskList.appendChild(task);
+  }
+
+  function calculateScore() {
+    const taskLists = document.querySelectorAll('.task-list');
+    let totalScore = 0;
+    let maxScore = 0;
+
+    taskLists.forEach(taskList => {
+      const tasks = taskList.querySelectorAll('.task');
+      const category = taskList.id;
+
+      let categoryScore = 0;
+      let categoryMaxScore = 0;
+
+      tasks.forEach(task => {
+        const checkbox = task.querySelector('input[type="checkbox"]');
+        const priority = task.querySelector('select').value;
+        let taskScore = 0;
+
+        switch(priority) {
+          case 'Important Tasks':
+            taskScore = checkbox.checked ? 65 : 0;
+            break;
+          case 'Time-Wasting Activities':
+            taskScore = checkbox.checked ? 20 : 0;
+            break;
+          case 'Taking care of myself':
+            taskScore = checkbox.checked ? 15 : 0;
+            break;
+          default:
+            taskScore = 0;
         }
 
-        function calculateScore() {
-            const tasks = document.querySelectorAll('.task');
-            let completedTasks = 0;
-            let totalTasks = tasks.length;
+        categoryScore += taskScore;
+        categoryMaxScore += (priority === 'Important Tasks' ? 65 : (priority === 'Time-Wasting Activities' ? 20 : 15)); // Adding maximum score based on priority
 
-            tasks.forEach(task => {
-                const checkbox = task.querySelector('input[type="checkbox"]');
-                if (checkbox.checked) {
-                    completedTasks++;
-                }
-            });
+      });
 
-            let score = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-            document.getElementById('score').innerText = `Your productivity score is: ${score.toFixed(2)}%`;
-            saveTasks();
-        }
+      totalScore += categoryScore;
+      maxScore += categoryMaxScore;
 
-        function saveTasks() {
-            const tasks = [];
-            document.querySelectorAll('.task').forEach(task => {
-                const description = task.querySelector('input[type="text"]').value;
-                const dueDate = task.querySelector('input[type="date"]').value;
-                const priority = task.querySelector('select').value;
-                const completed = task.querySelector('input[type="checkbox"]').checked;
-                tasks.push({ description, dueDate, priority, completed });
-            });
-            localStorage.setItem('tasks', JSON.stringify(tasks));
-        }
+    });
 
-        function loadTasks() {
-            const savedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
-            savedTasks.forEach(task => addTask(task.description, task.dueDate, task.priority, task.completed));
-        }
+    let scorePercentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
+    document.getElementById('score').innerText = `Your productivity score is: ${scorePercentage.toFixed(2)}%`;
+    saveTasks();
+  }
 
-        function removeTask(button) {
-            button.parentElement.remove();
-            saveTasks();
-        }
-    </script>
+  function removeTask(button) {
+    button.parentElement.remove();
+    saveTasks();
+  }
+
+  function updateCategory(select) {
+    const task = select.parentElement;
+    const newCategory = select.value;
+    document.getElementById(newCategory).appendChild(task);
+    saveTasks();
+  }
+
+  function saveTasks() {
+    const tasks = [];
+    document.querySelectorAll('.task-list .task').forEach(task => {
+      const description = task.querySelector('input[type="text"]').value;
+      const priority = task.querySelector('select').value;
+      const completed = task.querySelector('input[type="checkbox"]').checked;
+      tasks.push({ description, priority, completed });
+    });
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+  }
+
+  function loadTasks() {
+    const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+    tasks.forEach(task => {
+      addTask(task.description, task.priority, task.completed, getCategory(task.priority));
+    });
+  }
+
+  loadTasks();
+
+  function getCategory(priority) {
+    switch (priority) {
+      case 'Important Tasks':
+        return 'importantTasksList';
+      case 'Time-Wasting Activities':
+        return 'timeWastingActivitiesList';
+      case 'Taking care of myself':
+        return 'selfCareList';
+      default:
+        return 'urgentImportantList';
+    }
+  }
+</script>
 </body>
 </html>
-
-
