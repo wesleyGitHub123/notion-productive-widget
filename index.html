@@ -49,16 +49,21 @@
 
 <button onclick="calculateCompletion()">Calculate Completion Percentage</button>
 <button onclick="resetTasks()">Reset All Tasks</button>
+<button id="toggleCheckButton" onclick="toggleCheckAllTasks()">Check All Tasks</button>
 <div id="completionResult"></div>
 
 <script>
   function addTask(list) {
     const listElement = document.getElementById(`list-${list}`);
     const taskCount = listElement.children.length + 1;
-    const newTask = `<li class="task-item"><input type="checkbox" id="task-${list}-${taskCount}" onchange="saveTasks()"> Task ${taskCount}<input type="text" onchange="saveTasks()" placeholder="Task description"></li>`;
+    const newTask = `<li class="task-item">
+                       <input type="checkbox" id="task-${list}-${taskCount}" onchange="saveTasks()">
+                       Task ${taskCount} <input type="text" onchange="saveTasks()" placeholder="Enter task description">
+                     </li>`;
     listElement.insertAdjacentHTML('beforeend', newTask);
     saveTasks(); // Save tasks to local storage after adding a new task
   }
+
   function removeTask(list) {
     const listElement = document.getElementById(`list-${list}`);
     const lastTask = listElement.lastElementChild;
@@ -67,6 +72,7 @@
       saveTasks(); // Save tasks to local storage after removing a task
     }
   }
+
   function calculateCompletion() {
     // Initialize variables to count completed tasks and total tasks for each list
     let completedTasksA = 0;
@@ -123,6 +129,27 @@
     document.getElementById("completionResult").innerHTML = `Overall Completion Percentage: ${overallCompletion.toFixed(2)}%`;
   }
 
+  let areTasksChecked = false; // Variable to track the current state
+
+  function toggleCheckAllTasks() {
+    ['a', 'b', 'c'].forEach(list => {
+      const checkboxes = document.querySelectorAll(`#list-${list} input[type="checkbox"]`);
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = !areTasksChecked;
+      });
+    });
+    saveTasks(); // Save the current state to local storage
+
+    // Toggle the button text and state
+    const button = document.getElementById('toggleCheckButton');
+    if (areTasksChecked) {
+      button.innerText = 'Check All Tasks';
+    } else {
+      button.innerText = 'Uncheck All Tasks';
+    }
+    areTasksChecked = !areTasksChecked; // Flip the state
+  }
+
   function saveTasks() {
     const tasks = {
       listA: [],
@@ -157,6 +184,16 @@
           listElement.insertAdjacentHTML('beforeend', newTask);
         });
       });
+
+      // Determine the initial state of the toggle button
+      const allChecked = ['a', 'b', 'c'].every(list => {
+        const checkboxes = document.querySelectorAll(`#list-${list} input[type="checkbox"]`);
+        return Array.from(checkboxes).every(checkbox => checkbox.checked);
+      });
+
+      areTasksChecked = allChecked;
+      const button = document.getElementById('toggleCheckButton');
+      button.innerText = allChecked ? 'Uncheck All Tasks' : 'Check All Tasks';
     }
   }
 
@@ -164,11 +201,15 @@
   document.addEventListener('DOMContentLoaded', function() {
     loadTasks();
   });
+
+
   function resetTasks() {
-    localStorage.removeItem('tasks'); // Remove saved tasks from local storage
-    ['a', 'b', 'c'].forEach(list => {
-      document.getElementById(`list-${list}`).innerHTML = ''; // Clear tasks from each list
-    });
+    if (confirm("Are you sure you want to reset all tasks? This action cannot be undone.")) {
+      localStorage.removeItem('tasks'); // Remove saved tasks from local storage
+      ['a', 'b', 'c'].forEach(list => {
+        document.getElementById(`list-${list}`).innerHTML = ''; // Clear tasks from each list
+      });
+    }
   }
 
   // Load tasks when the DOM content is fully loaded
